@@ -1,7 +1,5 @@
 package com.example.tennisapp.bluetooth
 
-package com.example.mybluetooth.bluetooth
-
 import android.annotation.SuppressLint
 import android.bluetooth.*
 import android.bluetooth.le.ScanCallback
