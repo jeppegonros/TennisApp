@@ -6,5 +6,5 @@ package com.example.tennisapp.viewModel
  */
 enum class SensorSource {
     EXTERNAL_XIAO,
-    INTERNAL_PHONE
+
 }

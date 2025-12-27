@@ -10,7 +10,6 @@ data class ImuSample(
     companion object {
         fun fromBle(data: IMUData): ImuSample {
             val g = 9.81f
-
             return ImuSample(
                 timeSec = data.timestamp / 1000f,
                 acc = Vector3(

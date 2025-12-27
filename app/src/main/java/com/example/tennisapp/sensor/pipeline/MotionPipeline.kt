@@ -9,71 +9,55 @@ import com.example.tennisapp.sensor.kpi.KPIState
 import com.example.tennisapp.sensor.kpi.PowerKPI
 import com.example.tennisapp.sensor.kpi.SpinRateKPI
 import com.example.tennisapp.sensor.imu.ImuSample
-import com.example.tennisapp.sensor.imu.Vector3
 import com.example.tennisapp.sensor.signal.SignalProcessor
-import com.example.tennisapp.sensor.state.AngularState
-import com.example.tennisapp.sensor.state.LinearState
 import com.example.tennisapp.sensor.state.MotionState
-
-/**
- * Connects BLE -->KPIs
- */
 
 class MotionPipeline {
 
-    // Signal and Event Processors
     private val signalProcessor = SignalProcessor()
     private val eventDetector = EventDetector()
 
-    // KPI Calculators
     private val flightTimeKPI = FlightTimeKPI()
     private val spinRateKPI = SpinRateKPI()
     private val powerKPI = PowerKPI()
 
-    // Keep track of the last known state
-    private var lastState = MotionState(
-        time = 0f,
-        linear = LinearState(),
-        angular = AngularState()
-    )
+    private var lastState: MotionState = MotionState.zero()
 
     fun update(imu: IMUData): KPIState {
 
-        // 1. Process raw IMU data into a richer MotionState
-        val sample = ImuSample(
-            timeSec = imu.timestamp / 1000f,
-            acc = Vector3(imu.ax, imu.ay, imu.az),
-            gyro = Vector3(imu.gx, imu.gy, imu.gz)
-        )
+        // 1) Correct scaling from BLE units
+        val sample = ImuSample.fromBle(imu)
+
         val signals = signalProcessor.update(sample)
+
         val newState = MotionState(
             time = signals.time,
             linear = signals.linear,
             angular = signals.angular
         )
 
-        // 2. Detect discrete events from the new state
+        // 2) Events
         val events = eventDetector.update(newState, lastState)
 
-        // 3. Update all KPIs with the new state and events
+        // 3) KPIs
         flightTimeKPI.update(newState, events)
         spinRateKPI.update(newState, events)
         powerKPI.update(newState, events)
 
-        // 4. Update the last known state
         lastState = newState
 
-        // 5. Return the aggregated KPI state for the UI
+        val impact = events.any { it is ImpactEvent }
+        val apex = events.any { it is ApexEvent }
+
         return KPIState(
             timestamp = imu.timestamp,
             accelMagnitude = newState.linear.acc.magnitude(),
-            impactDetected = events.any { it is ImpactEvent },
-            apexDetected = events.any { it is ApexEvent },
+            impactDetected = impact,
+            apexDetected = apex,
+            angularSpeed = newState.angular.gyro.magnitude(),
             spinRPM = spinRateKPI.value() ?: 0f,
             estimatedPower = powerKPI.value() ?: 0f,
-            // Note: FlightTimeKPI now calculates duration between release and impact.
-            // If you still need time since the *last* impact, you can manage it here.
-            timeSinceImpactMs = 0L // This can be re-implemented if needed
+            timeSinceImpactMs = 0L
         )
     }
 }

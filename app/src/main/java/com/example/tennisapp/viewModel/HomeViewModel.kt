@@ -6,48 +6,43 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tennisapp.NotificationHelper
-import com.example.tennisapp.bluetooth.IMUData
 import com.example.tennisapp.bluetooth.XiaoBleManager
 import com.example.tennisapp.sensor.pipeline.MotionPipeline
+import com.example.tennisapp.session.HitRecord
+import com.example.tennisapp.session.SessionFiles
+import com.example.tennisapp.session.SessionRecorder
+import com.example.tennisapp.session.SessionRepository
+import com.example.tennisapp.session.SessionSummary
 import com.example.tennisapp.sensor.kpi.KPIState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlin.math.sqrt
-
+import kotlin.math.max
+import kotlin.math.min
 
 class HomeViewModel(
     app: Application,
     private val ble: XiaoBleManager
 ) : AndroidViewModel(app) {
 
-    /* ---------------- PROCESSING PIPELINE ---------------- */
-
     private val motionPipeline = MotionPipeline()
+    private val notificationHelper = NotificationHelper(getApplication())
 
-    /* ---------------- RECORDING STATE ---------------- */
-
-    private var recordingStartTime = 0L
-    val exportStartTime: Long
-        get() = recordingStartTime
+    private val recorder = SessionRecorder(getApplication())
+    private val repo = SessionRepository(getApplication())
 
     private var recordingJob: Job? = null
+    private var recordingStartTime = 0L
+    private var lastImpactAtMs = 0L
+    private val impactCooldownMs = 140L
 
-    /* ---------------- BLE ---------------- */
+    private var currentSessionFiles: SessionFiles? = null
 
     val devices: SharedFlow<BluetoothDevice> = ble.devices
     val isXiaoConnected: StateFlow<Boolean> = ble.isConnected
 
-    /* ---------------- DATA ---------------- */
-
-    // Raw IMU data (export / offline analysis)
-    val recordedImuData = MutableStateFlow<List<IMUData>>(emptyList())
-
-    // Live KPIs shown in UI
     private val _kpiState = MutableStateFlow(KPIState())
     val kpiState: StateFlow<KPIState> = _kpiState.asStateFlow()
-
-    /* ---------------- UI STATE ---------------- */
 
     private val _isRecording = MutableStateFlow(false)
     val isRecording: StateFlow<Boolean> = _isRecording.asStateFlow()
@@ -58,9 +53,28 @@ class HomeViewModel(
     private val _errorMessage = MutableSharedFlow<String>()
     val errorMessage: SharedFlow<String> = _errorMessage.asSharedFlow()
 
-    private val notificationHelper = NotificationHelper(getApplication())
+    private val _hits = MutableStateFlow<List<HitRecord>>(emptyList())
+    val hits: StateFlow<List<HitRecord>> = _hits.asStateFlow()
 
-    /* ---------------- BLE CONTROL ---------------- */
+    private val _lastHit = MutableStateFlow<HitRecord?>(null)
+    val lastHit: StateFlow<HitRecord?> = _lastHit.asStateFlow()
+
+    private val _sessionSummary = MutableStateFlow<SessionSummary?>(null)
+    val sessionSummary: StateFlow<SessionSummary?> = _sessionSummary.asStateFlow()
+
+    private val _sessions = MutableStateFlow<List<SessionSummary>>(emptyList())
+    val sessions: StateFlow<List<SessionSummary>> = _sessions.asStateFlow()
+
+    private val _selectedSessionHits = MutableStateFlow<List<HitRecord>>(emptyList())
+    val selectedSessionHits: StateFlow<List<HitRecord>> = _selectedSessionHits.asStateFlow()
+
+    fun refreshSessions() {
+        _sessions.value = repo.listSessions()
+    }
+
+    fun loadSession(sessionId: String) {
+        _selectedSessionHits.value = repo.loadHits(sessionId)
+    }
 
     fun startScan() {
         if (activeSensorSource.value != SensorSource.EXTERNAL_XIAO) return
@@ -71,9 +85,7 @@ class HomeViewModel(
         try {
             ble.connect(dev)
         } catch (e: Exception) {
-            viewModelScope.launch {
-                _errorMessage.emit("Could not connect to the XIAO sensor.")
-            }
+            viewModelScope.launch { _errorMessage.emit("Could not connect to the XIAO sensor.") }
         }
     }
 
@@ -86,47 +98,50 @@ class HomeViewModel(
         if (isRecording.value) stopRecording()
     }
 
-    /* ---------------- RECORDING ---------------- */
-
     fun startRecording() {
         if (_isRecording.value) return
 
-        if (activeSensorSource.value == SensorSource.EXTERNAL_XIAO &&
-            !isXiaoConnected.value
-        ) {
-            viewModelScope.launch {
-                _errorMessage.emit("XIAO is not connected.")
-            }
+        if (activeSensorSource.value == SensorSource.EXTERNAL_XIAO && !isXiaoConnected.value) {
+            viewModelScope.launch { _errorMessage.emit("XIAO is not connected.") }
             return
         }
 
         _isRecording.value = true
-        recordedImuData.value = emptyList()
+        _hits.value = emptyList()
+        _lastHit.value = null
+        _sessionSummary.value = null
+
         recordingStartTime = System.currentTimeMillis()
+        lastImpactAtMs = 0L
 
-        Log.d("HomeViewModel", "Recording started at $recordingStartTime")
-
+        currentSessionFiles = recorder.start()
+        Log.d("HomeViewModel", "Recording started, sessionId=${currentSessionFiles?.sessionId}")
 
         recordingJob = viewModelScope.launch {
-
             ble.imu.collectLatest { imu ->
 
-                /* ---------- 1. STORE RAW DATA ---------- */
-                recordedImuData.update { it + imu }
-
-                /* ---------- 2. KPI PIPELINE ---------- */
                 val kpis = motionPipeline.update(imu)
                 _kpiState.value = kpis
 
-                /* ---------- 3. NOTIFICATION ---------- */
-                if (recordedImuData.value.size % 20 == 0) {
+                recorder.appendRaw(imu)
+                recorder.appendKpi(kpis)
 
-                    val accMag = sqrt(
-                        imu.ax * imu.ax +
-                                imu.ay * imu.ay +
-                                imu.az * imu.az
-                    )
+                if (kpis.impactDetected) {
+                    val now = imu.timestamp
+                    if (now - lastImpactAtMs >= impactCooldownMs) {
+                        lastImpactAtMs = now
 
+                        val hit = HitRecord(
+                            timestamp = now,
+                            power = kpis.estimatedPower,
+                            spinRpm = kpis.spinRPM,
+                            impactIntensity = kpis.accelMagnitude
+                        )
+
+                        _hits.update { it + hit }
+                        _lastHit.value = hit
+                        recorder.appendHit(hit)
+                    }
                 }
             }
         }
@@ -137,7 +152,83 @@ class HomeViewModel(
         recordingJob = null
         _isRecording.value = false
 
+        val end = System.currentTimeMillis()
+        val start = recordingStartTime
+        val sessionId = currentSessionFiles?.sessionId ?: "unknown"
+
+        val summary = computeSummary(
+            sessionId = sessionId,
+            startTimeMs = start,
+            endTimeMs = end,
+            hits = _hits.value
+        )
+
+        _sessionSummary.value = summary
+        recorder.writeSummary(summary)
+        recorder.stop()
+
         notificationHelper.cancelNotification()
-        Log.d("HomeViewModel", "Recording stopped")
+        Log.d("HomeViewModel", "Recording stopped, sessionId=$sessionId")
+
+        refreshSessions()
+    }
+
+    private fun computeSummary(
+        sessionId: String,
+        startTimeMs: Long,
+        endTimeMs: Long,
+        hits: List<HitRecord>
+    ): SessionSummary {
+
+        if (hits.isEmpty()) {
+            return SessionSummary(
+                sessionId = sessionId,
+                startTimeMs = startTimeMs,
+                endTimeMs = endTimeMs,
+                durationMs = max(0L, endTimeMs - startTimeMs),
+                hitCount = 0,
+
+                avgPower = 0f, maxPower = 0f, minPower = 0f,
+                avgSpin = 0f, maxSpin = 0f, minSpin = 0f
+            )
+        }
+
+        var sumPower = 0f
+        var sumSpin = 0f
+
+        var maxPower = Float.NEGATIVE_INFINITY
+        var minPower = Float.POSITIVE_INFINITY
+
+        var maxSpin = Float.NEGATIVE_INFINITY
+        var minSpin = Float.POSITIVE_INFINITY
+
+        for (h in hits) {
+            sumPower += h.power
+            sumSpin += h.spinRpm
+
+            maxPower = max(maxPower, h.power)
+            minPower = min(minPower, h.power)
+
+            maxSpin = max(maxSpin, h.spinRpm)
+            minSpin = min(minSpin, h.spinRpm)
+        }
+
+        val n = hits.size.toFloat()
+
+        return SessionSummary(
+            sessionId = sessionId,
+            startTimeMs = startTimeMs,
+            endTimeMs = endTimeMs,
+            durationMs = max(0L, endTimeMs - startTimeMs),
+            hitCount = hits.size,
+
+            avgPower = sumPower / n,
+            maxPower = maxPower,
+            minPower = minPower,
+
+            avgSpin = sumSpin / n,
+            maxSpin = maxSpin,
+            minSpin = minSpin
+        )
     }
 }
