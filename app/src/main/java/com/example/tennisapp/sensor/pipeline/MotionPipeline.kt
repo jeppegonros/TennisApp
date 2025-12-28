@@ -21,13 +21,15 @@ class MotionPipeline {
     private val spinRateKPI = SpinRateKPI()
     private val powerKPI = PowerKPI()
 
-    private var lastState: MotionState = MotionState.zero()
+    // No previous state at start
+    private var lastState: MotionState? = null
 
     fun update(imu: IMUData): KPIState {
 
-        // 1) Correct scaling from BLE units
+        // 1) Convert BLE data to correctly scaled IMU sample
         val sample = ImuSample.fromBle(imu)
 
+        // 2) Signal processing (filters, integration, etc.)
         val signals = signalProcessor.update(sample)
 
         val newState = MotionState(
@@ -36,24 +38,30 @@ class MotionPipeline {
             angular = signals.angular
         )
 
-        // 2) Events
-        val events = eventDetector.update(newState, lastState)
+        // 3) Event detection (skip first sample)
+        val events = if (lastState == null) {
+            emptyList()
+        } else {
+            eventDetector.update(newState, lastState!!)
+        }
 
-        // 3) KPIs
+        // 4) KPI updates
         flightTimeKPI.update(newState, events)
         spinRateKPI.update(newState, events)
         powerKPI.update(newState, events)
 
+        // Update previous state
         lastState = newState
 
-        val impact = events.any { it is ImpactEvent }
-        val apex = events.any { it is ApexEvent }
+        val impactDetected = events.any { it is ImpactEvent }
+        val apexDetected = events.any { it is ApexEvent }
 
+        // 5) Output combined KPI state
         return KPIState(
             timestamp = imu.timestamp,
             accelMagnitude = newState.linear.acc.magnitude(),
-            impactDetected = impact,
-            apexDetected = apex,
+            impactDetected = impactDetected,
+            apexDetected = apexDetected,
             angularSpeed = newState.angular.gyro.magnitude(),
             spinRPM = spinRateKPI.value() ?: 0f,
             estimatedPower = powerKPI.value() ?: 0f,
