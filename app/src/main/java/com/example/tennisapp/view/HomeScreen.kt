@@ -4,34 +4,29 @@ import android.Manifest
 import android.bluetooth.BluetoothDevice
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.tennisapp.ui.theme.TennisAppTheme
 import com.example.tennisapp.viewModel.HomeViewModel
 
+enum class Screen {
+    WELCOME,
+    LIVE_SESSION
+}
 
 @Composable
 fun HomeScreen(vm: HomeViewModel) {
     val context = LocalContext.current
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    var currentScreen by remember { mutableStateOf(Screen.WELCOME) }
+    var playerName by remember { mutableStateOf("") }
+    var sessionNotes by remember { mutableStateOf("") }
+    var sessionStartTime by remember { mutableStateOf(0L) }
 
-    val data by vm.data.collectAsState()
-    val latestData = data.lastOrNull()
     val devices = remember { mutableStateListOf<BluetoothDevice>() }
-    val activeSensorSource by vm.activeSensorSource.collectAsState()
     val isRecording by vm.isRecording.collectAsState()
     val isXiaoConnected by vm.isXiaoConnected.collectAsState()
+    val kpiState by vm.kpiState.collectAsState()
+    val hits by vm.hits.collectAsState()
+    val lastHit by vm.lastHit.collectAsState()
 
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -48,20 +43,77 @@ fun HomeScreen(vm: HomeViewModel) {
             )
         )
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+    // Collect discovered devices
+    LaunchedEffect(Unit) {
+        vm.devices.collect { device ->
+            if (!devices.contains(device)) {
+                devices.add(device)
+            }
+        }
+    }
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    TennisAppTheme {
-        Greeting("Android")
+    // Calculate elapsed time
+    val elapsedTime = remember(isRecording) {
+        derivedStateOf {
+            if (isRecording) {
+                System.currentTimeMillis() - sessionStartTime
+            } else {
+                0L
+            }
+        }
+    }
+
+    when (currentScreen) {
+        Screen.WELCOME -> {
+            WelcomeScreen(
+                playerName = playerName,
+                onPlayerNameChange = { playerName = it },
+                sessionNotes = sessionNotes,
+                onSessionNotesChange = { sessionNotes = it },
+                isXiaoConnected = isXiaoConnected,
+                devices = devices,
+                onStartScan = {
+                    devices.clear()
+                    vm.startScan()
+                },
+                onConnectDevice = { device ->
+                    vm.connectTo(device)
+                },
+                onDisconnect = {
+                    vm.disconnectXiao()
+                },
+                onNavigateToSession = {
+                    currentScreen = Screen.LIVE_SESSION
+                }
+            )
+        }
+
+        Screen.LIVE_SESSION -> {
+            LiveSessionScreen(
+                kpiState = kpiState,
+                isRecording = isRecording,
+                hitCount = hits.size,
+                lastHit = lastHit,
+                elapsedTimeMs = elapsedTime.value,
+                onStartRecording = {
+                    sessionStartTime = System.currentTimeMillis()
+                    vm.startRecording()
+                },
+                onPauseRecording = {
+                    // Pause functionality can be implemented later
+                    vm.stopRecording()
+                },
+                onStopRecording = {
+                    vm.stopRecording()
+                    currentScreen = Screen.WELCOME
+                },
+                onBack = {
+                    if (!isRecording) {
+                        currentScreen = Screen.WELCOME
+                    }
+                }
+            )
+        }
     }
 }

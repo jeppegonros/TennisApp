@@ -1,4 +1,4 @@
-<manifestadd xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Bluetooth permits -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
@@ -30,7 +30,7 @@
 
     <application
         android:label="MyBluetooth"
-        android:theme="@style/Theme.MyBluetooth">
+        android:theme="@style/Theme.TennisApp">
 
         <activity
             android:name=".MainActivity"
@@ -43,4 +43,4 @@
 
     </application>
 
-</manifestadd>
+</manifest>
