@@ -2,42 +2,50 @@ package com.example.tennisapp.view
 
 import android.Manifest
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
+import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import com.example.tennisapp.viewModel.HomeViewModel
 
 enum class Screen {
     WELCOME,
     LIVE_SESSION,
-    HISTORY
+    SESSION_SUMMARY,
+    RESULTS
 }
 
 @Composable
 fun HomeScreen(vm: HomeViewModel) {
     val context = LocalContext.current
-
     var currentScreen by remember { mutableStateOf(Screen.WELCOME) }
     var playerName by remember { mutableStateOf("") }
     var sessionNotes by remember { mutableStateOf("") }
     var sessionStartTime by remember { mutableStateOf(0L) }
 
     val devices = remember { mutableStateListOf<BluetoothDevice>() }
-
     val isRecording by vm.isRecording.collectAsState()
     val isXiaoConnected by vm.isXiaoConnected.collectAsState()
     val kpiState by vm.kpiState.collectAsState()
     val hits by vm.hits.collectAsState()
     val lastHit by vm.lastHit.collectAsState()
+    val sessionSummary by vm.sessionSummary.collectAsState()
+    val sessions by vm.sessions.collectAsState()
+
+    // Check if device Bluetooth is enabled
+    val isBluetoothEnabled = remember {
+        derivedStateOf {
+            try {
+                val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+                val bluetoothAdapter = bluetoothManager?.adapter
+                bluetoothAdapter?.isEnabled == true
+            } catch (e: Exception) {
+                false
+            }
+        }
+    }
 
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -55,6 +63,7 @@ fun HomeScreen(vm: HomeViewModel) {
         )
     }
 
+    // Collect discovered devices
     LaunchedEffect(Unit) {
         vm.devices.collect { device ->
             if (!devices.contains(device)) {
@@ -63,9 +72,10 @@ fun HomeScreen(vm: HomeViewModel) {
         }
     }
 
-    val elapsedTime = remember(isRecording) {
+    // Calculate elapsed time
+    val elapsedTime = remember(isRecording, sessionStartTime) {
         derivedStateOf {
-            if (isRecording) {
+            if (isRecording && sessionStartTime > 0) {
                 System.currentTimeMillis() - sessionStartTime
             } else {
                 0L
@@ -74,7 +84,6 @@ fun HomeScreen(vm: HomeViewModel) {
     }
 
     when (currentScreen) {
-
         Screen.WELCOME -> {
             WelcomeScreen(
                 playerName = playerName,
@@ -82,6 +91,7 @@ fun HomeScreen(vm: HomeViewModel) {
                 sessionNotes = sessionNotes,
                 onSessionNotesChange = { sessionNotes = it },
                 isXiaoConnected = isXiaoConnected,
+                isBluetoothEnabled = isBluetoothEnabled.value,
                 devices = devices,
                 onStartScan = {
                     devices.clear()
@@ -96,8 +106,9 @@ fun HomeScreen(vm: HomeViewModel) {
                 onNavigateToSession = {
                     currentScreen = Screen.LIVE_SESSION
                 },
-                onNavigateToHistory = {
-                    currentScreen = Screen.HISTORY
+                onNavigateToResults = {
+                    vm.refreshSessions()
+                    currentScreen = Screen.RESULTS
                 }
             )
         }
@@ -118,7 +129,7 @@ fun HomeScreen(vm: HomeViewModel) {
                 },
                 onStopRecording = {
                     vm.stopRecording()
-                    currentScreen = Screen.WELCOME
+                    currentScreen = Screen.SESSION_SUMMARY
                 },
                 onBack = {
                     if (!isRecording) {
@@ -128,19 +139,23 @@ fun HomeScreen(vm: HomeViewModel) {
             )
         }
 
-        Screen.HISTORY -> {
-            LaunchedEffect(Unit) {
-                vm.refreshSessions()
-            }
+        Screen.SESSION_SUMMARY -> {
+            SessionSummaryScreen(
+                sessionSummary = sessionSummary,
+                onBackToWelcome = {
+                    currentScreen = Screen.WELCOME
+                }
+            )
+        }
 
-            val sessions by vm.sessions.collectAsState()
-
-            HistoryScreen(
+        Screen.RESULTS -> {
+            ResultsScreen(
                 sessions = sessions,
-                onBack = { currentScreen = Screen.WELCOME },
-                onOpenSession = { sessionId ->
-                    vm.loadSession(sessionId)
-                    // If you add a SessionDetails screen later, navigate there here
+                onBackToWelcome = {
+                    currentScreen = Screen.WELCOME
+                },
+                onSessionClick = { session ->
+                    vm.loadSession(session.sessionId)
                 }
             )
         }

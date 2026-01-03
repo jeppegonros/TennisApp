@@ -4,44 +4,14 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,12 +27,13 @@ fun WelcomeScreen(
     sessionNotes: String,
     onSessionNotesChange: (String) -> Unit,
     isXiaoConnected: Boolean,
+    isBluetoothEnabled: Boolean,
     devices: List<BluetoothDevice>,
     onStartScan: () -> Unit,
     onConnectDevice: (BluetoothDevice) -> Unit,
     onDisconnect: () -> Unit,
     onNavigateToSession: () -> Unit,
-    onNavigateToHistory: () -> Unit
+    onNavigateToResults: () -> Unit
 ) {
     var isScanning by remember { mutableStateOf(false) }
 
@@ -73,10 +44,25 @@ fun WelcomeScreen(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(32.dp))
+        // Top Bar with Results Button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            IconButton(onClick = onNavigateToResults) {
+                Icon(
+                    Icons.Default.Info,
+                    contentDescription = "View Results",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
 
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // App Title
         Text(
-            text = "SmartServe Ball",
+            text = "🎾 SmartServe Ball",
             style = MaterialTheme.typography.headlineLarge.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 32.sp
@@ -94,6 +80,49 @@ fun WelcomeScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
+        // Bluetooth Disabled Warning
+        if (!isBluetoothEnabled) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Bluetooth Disabled",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Please enable Bluetooth to connect to the sensor",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // Optional Inputs Section
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -101,7 +130,9 @@ fun WelcomeScreen(
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
                 Text(
                     text = "Session Setup (Optional)",
                     style = MaterialTheme.typography.titleMedium,
@@ -114,7 +145,9 @@ fun WelcomeScreen(
                     value = playerName,
                     onValueChange = onPlayerNameChange,
                     label = { Text("Player Name") },
-                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = "Player") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Person, contentDescription = "Player")
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -125,7 +158,9 @@ fun WelcomeScreen(
                     value = sessionNotes,
                     onValueChange = onSessionNotesChange,
                     label = { Text("Session Notes") },
-                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = "Notes") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Edit, contentDescription = "Notes")
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2,
                     maxLines = 3,
@@ -136,6 +171,7 @@ fun WelcomeScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Bluetooth Connection Section
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -146,8 +182,9 @@ fun WelcomeScreen(
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -159,10 +196,10 @@ fun WelcomeScreen(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
-
                         Spacer(modifier = Modifier.height(4.dp))
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Box(
                                 modifier = Modifier
                                     .size(12.dp)
@@ -172,9 +209,7 @@ fun WelcomeScreen(
                                         else Color(0xFFF44336)
                                     )
                             )
-
                             Spacer(modifier = Modifier.width(8.dp))
-
                             Text(
                                 text = if (isXiaoConnected) "Connected" else "Not Connected",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -198,7 +233,7 @@ fun WelcomeScreen(
                     }
                 }
 
-                if (!isXiaoConnected) {
+                if (!isXiaoConnected && isBluetoothEnabled) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
@@ -222,13 +257,11 @@ fun WelcomeScreen(
 
                     if (isScanning && devices.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(12.dp))
-
                         Text(
                             text = "Available Devices:",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f)
                         )
-
                         Spacer(modifier = Modifier.height(8.dp))
 
                         LazyColumn(
@@ -253,6 +286,7 @@ fun WelcomeScreen(
 
         Spacer(modifier = Modifier.weight(1f))
 
+        // Start Session Button
         Button(
             onClick = onNavigateToSession,
             modifier = Modifier
@@ -278,32 +312,13 @@ fun WelcomeScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedButton(
-            onClick = onNavigateToHistory,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Icon(
-                Icons.Default.List,
-                contentDescription = null,
-                modifier = Modifier.size(22.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = "View History",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-
         if (!isXiaoConnected) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Connect IMU sensor to continue",
+                text = if (!isBluetoothEnabled)
+                    "Enable Bluetooth and connect IMU sensor to continue"
+                else
+                    "Connect IMU sensor to continue",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error
             )
