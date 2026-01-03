@@ -76,7 +76,7 @@ fun WelcomeScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "🎾 SmartServe Ball",
+            text = "SmartServe Ball",
             style = MaterialTheme.typography.headlineLarge.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 32.sp
