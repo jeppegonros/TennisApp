@@ -165,12 +165,12 @@ private fun SessionItem(
                 )
                 QuickStat(
                     label = "Avg Power",
-                    value = session.avgPower.roundToInt().toString(),
+                    value = "${session.avgPower.roundToInt()} W",
                     color = Color(0xFF2196F3)
                 )
                 QuickStat(
                     label = "Avg Spin",
-                    value = session.avgSpin.roundToInt().toString(),
+                    value = "${session.avgSpin.roundToInt()} RPM",
                     color = Color(0xFFFF9800)
                 )
             }

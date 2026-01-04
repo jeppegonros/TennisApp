@@ -62,7 +62,7 @@ fun WelcomeScreen(
 
         // App Title
         Text(
-            text = "🎾 SmartServe Ball",
+            text = "SmartServe Ball",
             style = MaterialTheme.typography.headlineLarge.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 32.sp
@@ -134,7 +134,7 @@ fun WelcomeScreen(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Session Setup (Optional)",
+                    text = "Session Setup",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )

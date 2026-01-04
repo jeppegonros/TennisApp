@@ -235,7 +235,7 @@ private fun RealTimeDataSection(
         ) {
             DataIndicator(
                 title = "Acceleration",
-                value = "${kpiState.accelMagnitude.roundToInt()} m/s²",
+                value = String.format("%.2f m/s²", kpiState.accelMagnitude),
                 icon = Icons.Default.KeyboardArrowUp,
                 modifier = Modifier.weight(1f)
             )
@@ -288,7 +288,7 @@ private fun RealTimeDataSection(
                     ) {
                         LastHitMetric(
                             label = "Power",
-                            value = "${lastHit.power.roundToInt()}"
+                            value = "${lastHit.power.roundToInt()} W"
                         )
                         LastHitMetric(
                             label = "Spin",
@@ -296,7 +296,7 @@ private fun RealTimeDataSection(
                         )
                         LastHitMetric(
                             label = "Impact",
-                            value = "${lastHit.impactIntensity.roundToInt()}"
+                            value = "${lastHit.impactIntensity.roundToInt()} g"
                         )
                     }
                 }

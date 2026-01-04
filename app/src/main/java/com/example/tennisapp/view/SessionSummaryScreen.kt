@@ -114,7 +114,7 @@ fun SessionSummaryScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             StatisticsCard(
-                title = "Power",
+                title = "Power (W)",
                 avgValue = sessionSummary.avgPower.roundToInt().toString(),
                 maxValue = sessionSummary.maxPower.roundToInt().toString(),
                 minValue = sessionSummary.minPower.roundToInt().toString(),

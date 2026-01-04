@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
 import com.example.tennisapp.bluetooth.XiaoBleManager
 import com.example.tennisapp.ui.theme.TennisAppTheme
-import com.example.tennisapp.view.HomeScreen
+import com.example.tennisapp.navigation.HomeScreen
 import com.example.tennisapp.viewModel.HomeViewModel
 import com.example.tennisapp.viewModel.HomeViewModelFactory
 
