@@ -14,11 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.tennisapp.session.SessionSummary
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -114,7 +114,6 @@ private fun SessionItem(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Date and Duration Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -151,9 +150,32 @@ private fun SessionItem(
                 }
             }
 
+            val name = session.playerName.trim()
+            val notes = session.sessionNotes.trim()
+
+            if (name.isNotEmpty() || notes.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (name.isNotEmpty()) {
+                    Text(
+                        text = "Player: $name",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                if (notes.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Notes: $notes",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Statistics Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -178,6 +200,18 @@ private fun SessionItem(
     }
 }
 
+private fun formatDate(timestamp: Long): String {
+    val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
+    return sdf.format(Date(timestamp))
+}
+
+private fun formatDuration(durationMs: Long): String {
+    val totalSeconds = durationMs / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "%d:%02d".format(minutes, seconds)
+}
+
 @Composable
 private fun QuickStat(
     label: String,
@@ -189,28 +223,13 @@ private fun QuickStat(
     ) {
         Text(
             text = value,
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            ),
+            style = MaterialTheme.typography.titleLarge,
             color = color
         )
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
-}
-
-private fun formatDate(timestampMs: Long): String {
-    val sdf = SimpleDateFormat("MMM dd, yyyy - HH:mm", Locale.getDefault())
-    return sdf.format(Date(timestampMs))
-}
-
-private fun formatDuration(ms: Long): String {
-    val totalSeconds = ms / 1000
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return String.format("%d:%02d", minutes, seconds)
 }

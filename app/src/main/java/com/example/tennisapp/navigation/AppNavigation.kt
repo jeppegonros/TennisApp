@@ -134,7 +134,7 @@ fun HomeScreen(vm: HomeViewModel) {
                 elapsedTimeMs = elapsedTime,
                 onStartRecording = {
                     sessionStartTime = System.currentTimeMillis()
-                    vm.startRecording()
+                    vm.startRecording(playerName, sessionNotes)
                 },
                 onPauseRecording = {
                     vm.stopRecording()
@@ -146,6 +146,7 @@ fun HomeScreen(vm: HomeViewModel) {
                 onBack = {
                     if (!isRecording) {
                         currentScreen = Screen.WELCOME
+
                     }
                 }
             )

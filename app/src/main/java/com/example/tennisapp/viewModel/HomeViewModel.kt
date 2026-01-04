@@ -38,6 +38,9 @@ class HomeViewModel(
 
     private var currentSessionFiles: SessionFiles? = null
 
+    private var currentPlayerName: String = ""
+    private var currentSessionNotes: String = ""
+
     val devices: SharedFlow<BluetoothDevice> = ble.devices
     val isXiaoConnected: StateFlow<Boolean> = ble.isConnected
 
@@ -98,13 +101,16 @@ class HomeViewModel(
         if (isRecording.value) stopRecording()
     }
 
-    fun startRecording() {
+    fun startRecording(playerName: String, sessionNotes: String) {
         if (_isRecording.value) return
 
         if (activeSensorSource.value == SensorSource.EXTERNAL_XIAO && !isXiaoConnected.value) {
             viewModelScope.launch { _errorMessage.emit("XIAO is not connected.") }
             return
         }
+
+        currentPlayerName = playerName.trim()
+        currentSessionNotes = sessionNotes.trim()
 
         _isRecording.value = true
         _hits.value = emptyList()
@@ -118,8 +124,7 @@ class HomeViewModel(
         Log.d("HomeViewModel", "Recording started, sessionId=${currentSessionFiles?.sessionId}")
 
         recordingJob = viewModelScope.launch {
-            ble.imu.collectLatest { imu ->
-
+            ble.imu.collect { imu ->
                 val kpis = motionPipeline.update(imu)
                 _kpiState.value = kpis
 
@@ -156,11 +161,16 @@ class HomeViewModel(
         val start = recordingStartTime
         val sessionId = currentSessionFiles?.sessionId ?: "unknown"
 
-        val summary = computeSummary(
+        val summaryBase = computeSummary(
             sessionId = sessionId,
             startTimeMs = start,
             endTimeMs = end,
             hits = _hits.value
+        )
+
+        val summary = summaryBase.copy(
+            playerName = currentPlayerName,
+            sessionNotes = currentSessionNotes
         )
 
         _sessionSummary.value = summary
@@ -189,7 +199,10 @@ class HomeViewModel(
                 hitCount = 0,
 
                 avgPower = 0f, maxPower = 0f, minPower = 0f,
-                avgSpin = 0f, maxSpin = 0f, minSpin = 0f
+                avgSpin = 0f, maxSpin = 0f, minSpin = 0f,
+
+                playerName = "",
+                sessionNotes = ""
             )
         }
 
@@ -228,7 +241,10 @@ class HomeViewModel(
 
             avgSpin = sumSpin / n,
             maxSpin = maxSpin,
-            minSpin = minSpin
+            minSpin = minSpin,
+
+            playerName = "",
+            sessionNotes = ""
         )
     }
 }

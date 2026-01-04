@@ -5,12 +5,20 @@ import com.example.tennisapp.sensor.state.MotionState
 
 class SpinRateKPI : Kpi<Float> {
 
-    private var peak = 0f
+    // Smoothed live value, so it can go both up and down
+    private var smoothed = 0f
+
+    // 0.1 to 0.3 is usually good. Higher = more responsive, lower = more stable
+    private val alpha = 0.18f
 
     override fun update(state: MotionState, events: List<Event>) {
-        peak = maxOf(peak, state.angular.spinRate)
+        val v = state.angular.spinRate
+        smoothed += alpha * (v - smoothed)
     }
 
-    override fun value(): Float = peak
-    override fun reset() { peak = 0f }
+    override fun value(): Float = smoothed
+
+    override fun reset() {
+        smoothed = 0f
+    }
 }

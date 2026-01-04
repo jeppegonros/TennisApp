@@ -5,13 +5,19 @@ import com.example.tennisapp.sensor.state.MotionState
 
 class PowerKPI : Kpi<Float> {
 
-    private var peak = 0f
+    // Smoothed live value, so it updates continuously
+    private var smoothed = 0f
+
+    private val alpha = 0.16f
 
     override fun update(state: MotionState, events: List<Event>) {
         val proxy = state.linear.speed * state.angular.spinRate
-        peak = maxOf(peak, proxy)
+        smoothed += alpha * (proxy - smoothed)
     }
 
-    override fun value(): Float = peak
-    override fun reset() { peak = 0f }
+    override fun value(): Float = smoothed
+
+    override fun reset() {
+        smoothed = 0f
+    }
 }

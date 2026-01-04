@@ -33,7 +33,10 @@ class SessionRepository(private val context: Context) {
 
                 avgSpin = obj.getDouble("avgSpin").toFloat(),
                 maxSpin = obj.getDouble("maxSpin").toFloat(),
-                minSpin = obj.getDouble("minSpin").toFloat()
+                minSpin = obj.getDouble("minSpin").toFloat(),
+
+                playerName = obj.optString("playerName", ""),
+                sessionNotes = obj.optString("sessionNotes", "")
             )
         }
 

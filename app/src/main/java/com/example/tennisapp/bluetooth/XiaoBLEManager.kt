@@ -202,7 +202,7 @@ class XiaoBleManager(private val context: Context) {
                 gz = bb.short.toFloat()
             )
 
-            Log.d("BLE", "IMU packet: $imuData")
+            //Log.d("BLE", "IMU packet: $imuData")
 
             _imu.tryEmit(imuData)
         }

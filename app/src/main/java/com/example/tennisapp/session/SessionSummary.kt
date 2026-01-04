@@ -13,5 +13,8 @@ data class SessionSummary(
 
     val avgSpin: Float,
     val maxSpin: Float,
-    val minSpin: Float
+    val minSpin: Float,
+
+    val playerName: String = "",
+    val sessionNotes: String = ""
 )

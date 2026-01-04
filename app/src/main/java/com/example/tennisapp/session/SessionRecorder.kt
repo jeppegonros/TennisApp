@@ -99,6 +99,9 @@ class SessionRecorder(private val context: Context) {
         obj.put("maxSpin", summary.maxSpin)
         obj.put("minSpin", summary.minSpin)
 
+        obj.put("playerName", summary.playerName)
+        obj.put("sessionNotes", summary.sessionNotes)
+
         f.writeText(obj.toString())
     }
 
