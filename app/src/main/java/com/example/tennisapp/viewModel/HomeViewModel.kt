@@ -14,9 +14,11 @@ import com.example.tennisapp.session.SessionRecorder
 import com.example.tennisapp.session.SessionRepository
 import com.example.tennisapp.session.SessionSummary
 import com.example.tennisapp.sensor.kpi.KPIState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.max
 import kotlin.math.min
 
@@ -74,12 +76,24 @@ class HomeViewModel(
     private val _selectedSessionHits = MutableStateFlow<List<HitRecord>>(emptyList())
     val selectedSessionHits: StateFlow<List<HitRecord>> = _selectedSessionHits.asStateFlow()
 
+    //
     fun refreshSessions() {
-        _sessions.value = repo.listSessions()
+        viewModelScope.launch {
+            val list = withContext(Dispatchers.IO) {
+                repo.listSessions()
+            }
+            _sessions.value = list
+        }
     }
 
+    // för att läsa hits
     fun loadSession(sessionId: String) {
-        _selectedSessionHits.value = repo.loadHits(sessionId)
+        viewModelScope.launch {
+            val hits = withContext(Dispatchers.IO) {
+                repo.loadHits(sessionId)
+            }
+            _selectedSessionHits.value = hits
+        }
     }
 
     fun startScan() {
@@ -113,11 +127,9 @@ class HomeViewModel(
         recordingJob = null
         _isRecording.value = false
 
-        // Stop the notification but don't cancel it, so it can be resumed.
         notificationHelper.cancelNotification()
         Log.d("HomeViewModel", "Recording PAUSED")
     }
-
 
     fun startRecording(playerName: String, sessionNotes: String) {
         if (_isRecording.value) return
@@ -128,7 +140,6 @@ class HomeViewModel(
         }
 
         if (currentSessionFiles == null) {
-            // This is a NEW session
             Log.d("HomeViewModel", "Starting NEW recording session.")
             currentPlayerName = playerName.trim()
             currentSessionNotes = sessionNotes.trim()
@@ -139,12 +150,10 @@ class HomeViewModel(
             lastImpactAtMs = 0L
             currentSessionFiles = recorder.start()
         } else {
-            // This is a RESUMED session
             Log.d("HomeViewModel", "RESUMING recording session.")
         }
 
         _isRecording.value = true
-
 
         notificationHelper.showRecordingNotification(
             hitCount = 0,
@@ -234,10 +243,8 @@ class HomeViewModel(
                 endTimeMs = endTimeMs,
                 durationMs = max(0L, endTimeMs - startTimeMs),
                 hitCount = 0,
-
                 avgPower = 0f, maxPower = 0f, minPower = 0f,
                 avgSpin = 0f, maxSpin = 0f, minSpin = 0f,
-
                 playerName = "",
                 sessionNotes = ""
             )
@@ -271,15 +278,12 @@ class HomeViewModel(
             endTimeMs = endTimeMs,
             durationMs = max(0L, endTimeMs - startTimeMs),
             hitCount = hits.size,
-
             avgPower = sumPower / n,
             maxPower = maxPower,
             minPower = minPower,
-
             avgSpin = sumSpin / n,
             maxSpin = maxSpin,
             minSpin = minSpin,
-
             playerName = "",
             sessionNotes = ""
         )

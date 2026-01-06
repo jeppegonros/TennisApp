@@ -16,7 +16,8 @@ private data class BottomItem(
 @Composable
 fun BottomBar(
     navController: NavController,
-    visible: Boolean
+    visible: Boolean,
+    isXiaoConnected: Boolean
 ) {
     if (!visible) return
 
@@ -32,9 +33,16 @@ fun BottomBar(
         val currentRoute = backStackEntry.value?.destination?.route
 
         items.forEach { item ->
+
+            val isLive = item.screen.route == Screen.Live.route
+            val enabled = if (isLive) isXiaoConnected else true
+
             NavigationBarItem(
                 selected = currentRoute == item.screen.route,
+                enabled = enabled,
                 onClick = {
+                    if (!enabled) return@NavigationBarItem
+
                     navController.navigate(item.screen.route) {
                         popUpTo(Screen.Welcome.route) { saveState = true }
                         launchSingleTop = true
