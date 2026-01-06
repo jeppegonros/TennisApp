@@ -34,6 +34,9 @@ fun HomeScreen(vm: HomeViewModel) {
     val devices = remember { mutableStateListOf<BluetoothDevice>() }
     val isRecording by vm.isRecording.collectAsState()
     val isXiaoConnected by vm.isXiaoConnected.collectAsState()
+
+    val isScanning by vm.isScanning.collectAsState()
+
     val kpiState by vm.kpiState.collectAsState()
     val hits by vm.hits.collectAsState()
     val lastHit by vm.lastHit.collectAsState()
@@ -103,6 +106,7 @@ fun HomeScreen(vm: HomeViewModel) {
                 sessionNotes = sessionNotes,
                 onSessionNotesChange = { sessionNotes = it },
                 isXiaoConnected = isXiaoConnected,
+                isScanning = isScanning,
                 isBluetoothEnabled = isBluetoothEnabled,
                 devices = devices,
                 onStartScan = {
@@ -129,6 +133,7 @@ fun HomeScreen(vm: HomeViewModel) {
             LiveSessionScreen(
                 kpiState = kpiState,
                 isRecording = isRecording,
+                isDeviceConnected = isXiaoConnected,
                 hitCount = hits.size,
                 lastHit = lastHit,
                 elapsedTimeMs = elapsedTime,

@@ -50,6 +50,9 @@ class HomeViewModel(
     private val _isRecording = MutableStateFlow(false)
     val isRecording: StateFlow<Boolean> = _isRecording.asStateFlow()
 
+    private val _isScanning = MutableStateFlow(false)
+    val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
+
     private val _activeSensorSource = MutableStateFlow(SensorSource.EXTERNAL_XIAO)
     val activeSensorSource: StateFlow<SensorSource> = _activeSensorSource.asStateFlow()
 
@@ -81,11 +84,13 @@ class HomeViewModel(
 
     fun startScan() {
         if (activeSensorSource.value != SensorSource.EXTERNAL_XIAO) return
+        _isScanning.value = true
         ble.startScan()
     }
 
     fun connectTo(dev: BluetoothDevice) {
         try {
+            _isScanning.value = false
             ble.connect(dev)
         } catch (e: Exception) {
             viewModelScope.launch { _errorMessage.emit("Could not connect to the XIAO sensor.") }
@@ -93,6 +98,7 @@ class HomeViewModel(
     }
 
     fun disconnectXiao() {
+        _isScanning.value = false
         ble.disconnect()
     }
 
@@ -100,6 +106,18 @@ class HomeViewModel(
         _activeSensorSource.value = source
         if (isRecording.value) stopRecording()
     }
+
+    fun pauseRecording() {
+        if (!isRecording.value) return
+        recordingJob?.cancel()
+        recordingJob = null
+        _isRecording.value = false
+
+        // Stop the notification but don't cancel it, so it can be resumed.
+        notificationHelper.cancelNotification()
+        Log.d("HomeViewModel", "Recording PAUSED")
+    }
+
 
     fun startRecording(playerName: String, sessionNotes: String) {
         if (_isRecording.value) return
@@ -109,24 +127,41 @@ class HomeViewModel(
             return
         }
 
-        currentPlayerName = playerName.trim()
-        currentSessionNotes = sessionNotes.trim()
+        if (currentSessionFiles == null) {
+            // This is a NEW session
+            Log.d("HomeViewModel", "Starting NEW recording session.")
+            currentPlayerName = playerName.trim()
+            currentSessionNotes = sessionNotes.trim()
+            _hits.value = emptyList()
+            _lastHit.value = null
+            _sessionSummary.value = null
+            recordingStartTime = System.currentTimeMillis()
+            lastImpactAtMs = 0L
+            currentSessionFiles = recorder.start()
+        } else {
+            // This is a RESUMED session
+            Log.d("HomeViewModel", "RESUMING recording session.")
+        }
 
         _isRecording.value = true
-        _hits.value = emptyList()
-        _lastHit.value = null
-        _sessionSummary.value = null
 
-        recordingStartTime = System.currentTimeMillis()
-        lastImpactAtMs = 0L
 
-        currentSessionFiles = recorder.start()
-        Log.d("HomeViewModel", "Recording started, sessionId=${currentSessionFiles?.sessionId}")
+        notificationHelper.showRecordingNotification(
+            hitCount = 0,
+            power = 0f,
+            spin = 0f
+        )
 
         recordingJob = viewModelScope.launch {
             ble.imu.collect { imu ->
                 val kpis = motionPipeline.update(imu)
                 _kpiState.value = kpis
+
+                notificationHelper.updateNotification(
+                    hitCount = _hits.value.size,
+                    power = kpis.estimatedPower,
+                    spin = kpis.spinRPM
+                )
 
                 recorder.appendRaw(imu)
                 recorder.appendKpi(kpis)
@@ -176,6 +211,8 @@ class HomeViewModel(
         _sessionSummary.value = summary
         recorder.writeSummary(summary)
         recorder.stop()
+
+        currentSessionFiles = null
 
         notificationHelper.cancelNotification()
         Log.d("HomeViewModel", "Recording stopped, sessionId=$sessionId")

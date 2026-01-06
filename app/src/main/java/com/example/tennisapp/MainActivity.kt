@@ -1,6 +1,7 @@
 package com.example.tennisapp
 
 import android.os.Bundle
+import android.view.Surface
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,9 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
 import com.example.tennisapp.bluetooth.XiaoBleManager
 import com.example.tennisapp.ui.theme.TennisAppTheme
-import com.example.tennisapp.navigation.HomeScreen
 import com.example.tennisapp.viewModel.HomeViewModel
 import com.example.tennisapp.viewModel.HomeViewModelFactory
+import com.example.tennisapp.view.navigation.HomeScreen
 
 class MainActivity : ComponentActivity() {
 

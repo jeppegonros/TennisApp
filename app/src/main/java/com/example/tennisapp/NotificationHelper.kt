@@ -37,10 +37,11 @@ class NotificationHelper(private val context: Context) {
         }
     }
 
+    // 🔥 FIX 1: Update the method signature to accept relevant KPIs
     fun showRecordingNotification(
-        sampleCount: Int,
-        algorithm1: Float,
-        algorithm2: Float
+        hitCount: Int,
+        power: Float,
+        spin: Float
     ) {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -53,20 +54,26 @@ class NotificationHelper(private val context: Context) {
             PendingIntent.FLAG_IMMUTABLE
         )
 
+        // 🔥 FIX 2: Format the content text to show the new data
+        val contentText = "Hits: $hitCount | Power: %.0fW | Spin: %.0f RPM".format(power, spin)
+
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_record)
-            .setContentTitle("IMU Recording Active")
-            .setContentText("Samples: $sampleCount | Alg1: %.2f° | Alg2: %.2f°".format(algorithm1, algorithm2))
-            .setOngoing(true) // Can't be swiped away
+            .setContentTitle("Tennis Session Active")
+            .setContentText(contentText)
+            .setOngoing(true) // Can't be swiped away while recording
             .setContentIntent(pendingIntent)
+            .setOnlyAlertOnce(true) // Don't make noise for every update
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
 
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
 
-    fun updateNotification(sampleCount: Int, algorithm1: Float, algorithm2: Float) {
-        showRecordingNotification(sampleCount, algorithm1, algorithm2)
+    // 🔥 FIX 3: Update this method as well
+    fun updateNotification(hitCount: Int, power: Float, spin: Float) {
+        // Re-using the show notification method works perfectly for updating
+        showRecordingNotification(hitCount, power, spin)
     }
 
     fun cancelNotification() {

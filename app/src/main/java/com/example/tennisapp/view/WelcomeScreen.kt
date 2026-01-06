@@ -27,6 +27,7 @@ fun WelcomeScreen(
     sessionNotes: String,
     onSessionNotesChange: (String) -> Unit,
     isXiaoConnected: Boolean,
+    isScanning: Boolean,
     isBluetoothEnabled: Boolean,
     devices: List<BluetoothDevice>,
     onStartScan: () -> Unit,
@@ -35,7 +36,7 @@ fun WelcomeScreen(
     onNavigateToSession: () -> Unit,
     onNavigateToResults: () -> Unit
 ) {
-    var isScanning by remember { mutableStateOf(false) }
+    /* var isScanning by remember { mutableStateOf(false) } */
 
     Column(
         modifier = Modifier
@@ -238,7 +239,7 @@ fun WelcomeScreen(
 
                     Button(
                         onClick = {
-                            isScanning = true
+                            //isScanning = true
                             onStartScan()
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -274,7 +275,7 @@ fun WelcomeScreen(
                                     device = device,
                                     onClick = {
                                         onConnectDevice(device)
-                                        isScanning = false
+                                        //isScanning = false
                                     }
                                 )
                             }

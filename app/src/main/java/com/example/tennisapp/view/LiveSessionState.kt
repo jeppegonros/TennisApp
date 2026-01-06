@@ -25,6 +25,7 @@ import kotlin.math.roundToInt
 fun LiveSessionScreen(
     kpiState: KPIState,
     isRecording: Boolean,
+    isDeviceConnected: Boolean,
     hitCount: Int,
     lastHit: HitRecord?,
     elapsedTimeMs: Long,
@@ -87,6 +88,7 @@ fun LiveSessionScreen(
             // Recording Controls
             RecordingControls(
                 isRecording = isRecording,
+                isDeviceConnected = isDeviceConnected,
                 onStartRecording = onStartRecording,
                 onPauseRecording = onPauseRecording,
                 onStopRecording = onStopRecording
@@ -378,6 +380,7 @@ private fun LastHitMetric(
 @Composable
 private fun RecordingControls(
     isRecording: Boolean,
+    isDeviceConnected: Boolean,
     onStartRecording: () -> Unit,
     onPauseRecording: () -> Unit,
     onStopRecording: () -> Unit
@@ -388,27 +391,36 @@ private fun RecordingControls(
     ) {
         if (!isRecording) {
             // Start Button
-            Button(
-                onClick = onStartRecording,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4CAF50)
-                ),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Icon(
-                    Icons.Default.PlayArrow,
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
+            if (!isDeviceConnected) {
                 Text(
-                    text = "Start",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    text = "Device not connected. Cannot start recording.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp)
                 )
+            }else {
+                Button(
+                    onClick = onStartRecording,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(64.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4CAF50)
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(
+                        Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Start",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         } else {
             // Pause Button
