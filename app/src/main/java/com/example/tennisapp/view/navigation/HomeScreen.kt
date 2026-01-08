@@ -39,19 +39,16 @@ fun HomeScreen(vm: HomeViewModel) {
     var playerName by remember { mutableStateOf("") }
     var sessionNotes by remember { mutableStateOf("") }
 
-    // ✅ TIMER STATE (ackumulerar över paus/resume)
     var accumulatedTimeMs by remember { mutableStateOf(0L) }
     var lastStartTimeMs by remember { mutableStateOf(0L) }
     var elapsedTimeMs by remember { mutableStateOf(0L) }
 
-    // Ladda past sessions vid start
     LaunchedEffect(sessions.size) {
         if (sessions.isEmpty()) {
             vm.refreshSessions()
         }
     }
 
-    // ✅ Uppdatera start/paus så att tiden inte nollas vid paus
     LaunchedEffect(isRecording) {
         if (isRecording) {
             if (lastStartTimeMs == 0L) {
@@ -65,7 +62,6 @@ fun HomeScreen(vm: HomeViewModel) {
         }
     }
 
-    // ✅ Tick:ar medan inspelning pågår, annars visar ackumulerad tid
     LaunchedEffect(isRecording, accumulatedTimeMs, lastStartTimeMs) {
         if (isRecording) {
             while (isRecording) {
@@ -109,13 +105,11 @@ fun HomeScreen(vm: HomeViewModel) {
 
                     onNavigateToSession = {
                         if (isXiaoConnected) {
-                            // Start recording och gå till Live
                             vm.startRecording(playerName, sessionNotes)
                             navController.navigate(Screen.Live.route)
                         }
                     },
 
-                    // Past sessions (historik)
                     onNavigateToResults = {
                         navController.navigate(Screen.Summary.route)
                     }
@@ -132,7 +126,6 @@ fun HomeScreen(vm: HomeViewModel) {
                     elapsedTimeMs = elapsedTimeMs,
 
                     onStartRecording = {
-                        // Resume eller ny start
                         vm.startRecording(playerName, sessionNotes)
                     },
 
@@ -141,12 +134,10 @@ fun HomeScreen(vm: HomeViewModel) {
                     },
 
                     onStopRecording = {
-                        // Frys tiden direkt så UI inte hinner hoppa
                         elapsedTimeMs = accumulatedTimeMs
 
                         vm.stopRecording()
 
-                        // Reset timer lokalt för nästa session
                         accumulatedTimeMs = 0L
                         lastStartTimeMs = 0L
                         elapsedTimeMs = 0L

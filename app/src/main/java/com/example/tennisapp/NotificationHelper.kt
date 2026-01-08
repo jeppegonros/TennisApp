@@ -37,7 +37,6 @@ class NotificationHelper(private val context: Context) {
         }
     }
 
-    // 🔥 FIX 1: Update the method signature to accept relevant KPIs
     fun showRecordingNotification(
         hitCount: Int,
         power: Float,
@@ -54,7 +53,6 @@ class NotificationHelper(private val context: Context) {
             PendingIntent.FLAG_IMMUTABLE
         )
 
-        // 🔥 FIX 2: Format the content text to show the new data
         val contentText = "Hits: $hitCount | Power: %.0fW | Spin: %.0f RPM".format(power, spin)
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
@@ -70,9 +68,7 @@ class NotificationHelper(private val context: Context) {
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
 
-    // 🔥 FIX 3: Update this method as well
     fun updateNotification(hitCount: Int, power: Float, spin: Float) {
-        // Re-using the show notification method works perfectly for updating
         showRecordingNotification(hitCount, power, spin)
     }
 

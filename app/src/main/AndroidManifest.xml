@@ -4,12 +4,12 @@
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
 
-    <!-- New permissions for Android 12+ -->
+    <!-- permissions for Android 12+ -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
 
-    <!-- Same as SDK 23 variant for newer Android versions -->
+    <!-- SDK 23 variant for newer Android versions -->
     <uses-permission-sdk-23 android:name="android.permission.BLUETOOTH" />
     <uses-permission-sdk-23 android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission-sdk-23 android:name="android.permission.BLUETOOTH_CONNECT" />

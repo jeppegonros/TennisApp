@@ -41,7 +41,6 @@ fun LiveSessionScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Top Bar
         TopAppBar(
             title = {
                 Text(
@@ -63,11 +62,10 @@ fun LiveSessionScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())  // Afegeix scroll vertical
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Recording Status
             RecordingStatusCard(
                 isRecording = isRecording,
                 elapsedTimeMs = elapsedTimeMs
@@ -75,20 +73,17 @@ fun LiveSessionScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Hit Counter
             HitCounterCard(hitCount = hitCount)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Real-time Data Indicators
             RealTimeDataSection(
                 kpiState = kpiState,
                 lastHit = lastHit
             )
 
-            Spacer(modifier = Modifier.height(24.dp))  // Canviat de weight(1f) a height fix
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Recording Controls
             RecordingControls(
                 isRecording = isRecording,
                 isDeviceConnected = isDeviceConnected,
@@ -189,7 +184,6 @@ private fun HitCounterCard(hitCount: Int) {
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Custom Circle Icon (Tennis Ball)
             Box(
                 modifier = Modifier
                     .size(32.dp)
@@ -268,7 +262,6 @@ private fun RealTimeDataSection(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Custom Circle Icon for Last Hit
                         Box(
                             modifier = Modifier
                                 .size(20.dp)
@@ -436,7 +429,6 @@ private fun RecordingControls(
                 ),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                // Custom Pause Icon using two rectangles
                 Box(
                     modifier = Modifier.size(32.dp),
                     contentAlignment = Alignment.Center
@@ -477,7 +469,6 @@ private fun RecordingControls(
                 ),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                // Custom Stop Icon using a square
                 Box(
                     modifier = Modifier
                         .size(24.dp)

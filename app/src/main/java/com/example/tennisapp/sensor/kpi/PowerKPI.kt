@@ -5,7 +5,6 @@ import com.example.tennisapp.sensor.state.MotionState
 
 class PowerKPI : Kpi<Float> {
 
-    // Smoothed live value, so it updates continuously
     private var smoothed = 0f
 
     private val alpha = 0.16f

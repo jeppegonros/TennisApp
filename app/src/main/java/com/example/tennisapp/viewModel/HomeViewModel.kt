@@ -86,7 +86,6 @@ class HomeViewModel(
         }
     }
 
-    // för att läsa hits
     fun loadSession(sessionId: String) {
         viewModelScope.launch {
             val hits = withContext(Dispatchers.IO) {

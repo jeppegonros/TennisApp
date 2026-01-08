@@ -6,7 +6,6 @@ import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.tennisapp.bluetooth.XiaoBleManager
-import com.example.tennisapp.viewModel.HomeViewModel
 
 class HomeViewModelFactory(
     private val app: Application,

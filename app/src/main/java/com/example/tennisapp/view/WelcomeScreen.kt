@@ -5,8 +5,6 @@ import android.bluetooth.BluetoothDevice
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -42,7 +40,7 @@ fun WelcomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())  // Afegeix scroll vertical
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -263,7 +261,7 @@ fun WelcomeScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Canviat: Ara els dispositius es mostren directament sense LazyColumn dins de Card
+
                         Column(
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -279,7 +277,7 @@ fun WelcomeScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))  // Canviat de weight(1f) a height fix
+        Spacer(modifier = Modifier.height(24.dp))
 
         // Start Session Button
         Button(

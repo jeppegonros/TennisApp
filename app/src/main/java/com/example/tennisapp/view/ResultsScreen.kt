@@ -84,7 +84,7 @@ fun ResultsScreen(
                     .fillMaxSize()
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 16.dp)  // AFEGEIX PADDING AL FINAL
+                contentPadding = PaddingValues(bottom = 16.dp)
             ) {
                 items(sessions.sortedByDescending { it.startTimeMs }) { session ->
                     SessionItem(

@@ -44,7 +44,6 @@ fun HomeScreen(vm: HomeViewModel) {
     val sessionSummary by vm.sessionSummary.collectAsState()
     val sessions by vm.sessions.collectAsState()
 
-    // Check if device Bluetooth is enabled - refreshes every second
     var isBluetoothEnabled by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -76,7 +75,6 @@ fun HomeScreen(vm: HomeViewModel) {
         )
     }
 
-    // Collect discovered devices
     LaunchedEffect(Unit) {
         vm.devices.collect { device ->
             if (!devices.contains(device)) {
@@ -85,7 +83,6 @@ fun HomeScreen(vm: HomeViewModel) {
         }
     }
 
-    // Calculate elapsed time - updates every second while recording
     var elapsedTime by remember { mutableStateOf(0L) }
 
     LaunchedEffect(isRecording, sessionStartTime) {
@@ -168,7 +165,6 @@ fun HomeScreen(vm: HomeViewModel) {
         }
 
         Screen.RESULTS -> {
-            // LOGS AFEGITS AQUÍ
             Log.d("HomeScreen", "Showing RESULTS screen with ${sessions.size} sessions")
             sessions.forEach { session ->
                 Log.d("HomeScreen", "Session: ${session.sessionId}, avgSpin: ${session.avgSpin}, avgPower: ${session.avgPower}")

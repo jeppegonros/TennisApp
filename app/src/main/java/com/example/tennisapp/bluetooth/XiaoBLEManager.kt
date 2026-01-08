@@ -39,7 +39,6 @@ class XiaoBleManager(private val context: Context) {
     private val scanner = adapter?.bluetoothLeScanner
     private var gatt: BluetoothGatt? = null
 
-    // MATCHAR ARDUINO KODEN
     private val SERVICE_UUID =
         UUID.fromString("12345678-1234-5678-1234-56789ABC0001")
     private val CHAR_UUID =
@@ -47,9 +46,6 @@ class XiaoBleManager(private val context: Context) {
 
     private val CONFIG_UUID =
         UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
-
-
-    // FIX: SharedFlow med buffer + replay
 
     private val _imu = MutableSharedFlow<IMUData>(
         replay = 1,
