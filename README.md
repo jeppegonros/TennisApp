@@ -86,7 +86,7 @@ Make sure the following libraries are installed:
 
 #### 3. Select the Correct Board
 
-Go to:
+Go to Tools → Board → Seeed nRF52 mbed-enabled Boards → Seeed XIAO BLE Sense - nRF52840.
 
 
 #### 4. Upload the Firmware
