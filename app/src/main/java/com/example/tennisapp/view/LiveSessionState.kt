@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.sp
 import com.example.tennisapp.sensor.kpi.KPIState
 import com.example.tennisapp.session.HitRecord
 import kotlin.math.roundToInt
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,6 +63,7 @@ fun LiveSessionScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())  // Afegeix scroll vertical
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -83,7 +86,7 @@ fun LiveSessionScreen(
                 lastHit = lastHit
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(24.dp))  // Canviat de weight(1f) a height fix
 
             // Recording Controls
             RecordingControls(
@@ -98,7 +101,6 @@ fun LiveSessionScreen(
         }
     }
 }
-
 @Composable
 private fun RecordingStatusCard(
     isRecording: Boolean,

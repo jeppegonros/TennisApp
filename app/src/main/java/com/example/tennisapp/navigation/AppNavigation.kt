@@ -10,6 +10,7 @@ import android.Manifest
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
@@ -167,6 +168,12 @@ fun HomeScreen(vm: HomeViewModel) {
         }
 
         Screen.RESULTS -> {
+            // LOGS AFEGITS AQUÍ
+            Log.d("HomeScreen", "Showing RESULTS screen with ${sessions.size} sessions")
+            sessions.forEach { session ->
+                Log.d("HomeScreen", "Session: ${session.sessionId}, avgSpin: ${session.avgSpin}, avgPower: ${session.avgPower}")
+            }
+
             ResultsScreen(
                 sessions = sessions,
                 onBackToWelcome = {

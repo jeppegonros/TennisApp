@@ -186,6 +186,7 @@ class HomeViewModel(
                             spinRpm = kpis.spinRPM,
                             impactIntensity = kpis.accelMagnitude
                         )
+                        Log.d("HomeViewModel", "HIT DETECTED - Power: ${hit.power}, Spin: ${hit.spinRpm}, Impact: ${hit.impactIntensity}")
 
                         _hits.update { it + hit }
                         _lastHit.value = hit
@@ -268,11 +269,13 @@ class HomeViewModel(
 
             maxSpin = max(maxSpin, h.spinRpm)
             minSpin = min(minSpin, h.spinRpm)
+
+            Log.d("HomeViewModel", "Hit in summary - Power: ${h.power}, Spin: ${h.spinRpm}")
         }
 
         val n = hits.size.toFloat()
 
-        return SessionSummary(
+        val summary = SessionSummary(
             sessionId = sessionId,
             startTimeMs = startTimeMs,
             endTimeMs = endTimeMs,
@@ -287,5 +290,9 @@ class HomeViewModel(
             playerName = "",
             sessionNotes = ""
         )
+
+        Log.d("HomeViewModel", "SUMMARY - avgSpin: ${summary.avgSpin}, maxSpin: ${summary.maxSpin}, minSpin: ${summary.minSpin}")
+
+        return summary
     }
 }

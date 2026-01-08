@@ -19,6 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 
 @Composable
 fun WelcomeScreen(
@@ -36,12 +38,11 @@ fun WelcomeScreen(
     onNavigateToSession: () -> Unit,
     onNavigateToResults: () -> Unit
 ) {
-    /* var isScanning by remember { mutableStateOf(false) } */
-
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())  // Afegeix scroll vertical
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -238,10 +239,7 @@ fun WelcomeScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
-                        onClick = {
-                            //isScanning = true
-                            onStartScan()
-                        },
+                        onClick = onStartScan,
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary
@@ -265,18 +263,14 @@ fun WelcomeScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 150.dp)
+                        // Canviat: Ara els dispositius es mostren directament sense LazyColumn dins de Card
+                        Column(
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            items(devices) { device ->
+                            devices.forEach { device ->
                                 DeviceItem(
                                     device = device,
-                                    onClick = {
-                                        onConnectDevice(device)
-                                        //isScanning = false
-                                    }
+                                    onClick = { onConnectDevice(device) }
                                 )
                             }
                         }
@@ -285,7 +279,7 @@ fun WelcomeScreen(
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(24.dp))  // Canviat de weight(1f) a height fix
 
         // Start Session Button
         Button(

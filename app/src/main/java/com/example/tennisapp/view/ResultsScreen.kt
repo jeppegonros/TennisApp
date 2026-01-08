@@ -1,5 +1,6 @@
 package com.example.tennisapp.view
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +28,7 @@ fun ResultsScreen(
     onBackToWelcome: () -> Unit,
     onSessionClick: (SessionSummary) -> Unit
 ) {
+    Log.d("ResultsScreen", "ResultsScreen opened with ${sessions.size} sessions")
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -81,7 +83,8 @@ fun ResultsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)  // AFEGEIX PADDING AL FINAL
             ) {
                 items(sessions.sortedByDescending { it.startTimeMs }) { session ->
                     SessionItem(
@@ -99,6 +102,7 @@ private fun SessionItem(
     session: SessionSummary,
     onClick: () -> Unit
 ) {
+    Log.d("ResultsScreen", "Rendering session: ${session.sessionId}, avgSpin: ${session.avgSpin}, rounded: ${session.avgSpin.roundToInt()}")
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -218,6 +222,7 @@ private fun QuickStat(
     value: String,
     color: Color
 ) {
+    Log.d("ResultsScreen", "QuickStat - label: $label, value: $value")
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
